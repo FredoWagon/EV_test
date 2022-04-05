@@ -5,6 +5,7 @@ require 'json'
 require 'csv'
 require 'net/ftp'
 require 'tempfile'
+# require 'byebug'
 
 ## Design for fun
 class String
@@ -85,18 +86,17 @@ end
 # PLEASE ENTER YOUR CONFIGURATION VARIABLE HERE
 
 #API
-API_KEY = "????" # <====?
-
-API_URL = "https://app.eventmaker.io"
-EVENT_ID = "623892c455f3056b99d816d3"
-API_PATH = "/api/v1/events/#{EVENT_ID}/guests.json"
-
-#FTP
-FTP_LOGIN = "????" # <====?
-FTP_PASSWORD = "????" # <====?
-
-FTP_HOST = "????" # <====?
-FTP_PORT = "????"  # <====?
+# API_KEY = "????" # <====?
+#
+# API_URL = "https://app.eventmaker.io"
+# EVENT_ID = "623892c455f3056b99d816d3"
+# API_PATH = "/api/v1/events/#{EVENT_ID}/guests.json"
+#
+# #FTP
+# FTP_LOGIN = "????" # <====?
+# FTP_PASSWORD = "????" # <====?
+# FTP_HOST = "????" # <====?
+# FTP_PORT = "????"  # <====?
 
 
 
@@ -178,12 +178,21 @@ def upload_csv(file)
 
     # connect to ftp server then upload file
     ftp = Net::FTP.new
-    ftp.connect(FTP_HOST, FTP_PORT)
+    defined?(FTP_PORT) ? ftp.connect(FTP_HOST, FTP_PORT) : ftp.connect(FTP_HOST)
+
     ftp.login(FTP_LOGIN, FTP_PASSWORD)
     ftp.passive = true
-    ftp.putbinaryfile(file, "#{filename}") do |data|
+    ftp.debug_mode = true
+
+    ftp.putbinaryfile(file, "/fred/#{filename}") do |data|
         loading_animation(data)
     end
+    files = ftp.chdir("fred")
+    files = ftp.ls("Event*")
+    puts ""
+    puts "#{filename} uploaded !".light_blue
+    puts "FTP files list :"
+    puts files
     ftp.close
 
     # delete temporary file
@@ -191,7 +200,7 @@ def upload_csv(file)
 
     # animation
     puts ""
-    puts "#{filename} uploaded !".light_blue
+
     puts "= done"
     puts ""
     puts ""
@@ -207,9 +216,10 @@ def download_back_uploaded_csv(filename)
 
     # download request from ftp server
     ftp = Net::FTP.new
-    ftp.connect(FTP_HOST, FTP_PORT)
+    defined?(FTP_PORT) ? ftp.connect(FTP_HOST, FTP_PORT) : ftp.connect(FTP_HOST)
     ftp.login(FTP_LOGIN, FTP_PASSWORD)
     ftp.passive = true
+    ftp.chdir("fred")
     ftp.getbinaryfile(filename, localfile=File.basename(filename), 1024) do |data|
         loading_animation(data)
     end
